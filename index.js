@@ -86,9 +86,24 @@ clientRequestHandler.get('/featuredfoods', async (request, response) => {
         await mongoClient.connect();
         const donated_foods = mongoClient.db(community_foods_database_name).collection(donated_foods_collection_name);
         const featured_foods = await donated_foods.find().sort({ food_quantity: -1 }).limit(6).toArray();
-        console.log(featured_foods);
         response.send(featured_foods);
-
+    } catch (error) {
+        console.log(error);
+    } finally {
+        mongoClient.close();
+    }
+})
+clientRequestHandler.get('/availablefoods', async (request, response) => {
+    try {
+        await mongoClient.connect();
+        const page = parseInt(request.query.page);
+        const limit = parseInt(request.query.limit);
+        const donated_foods = mongoClient.db(community_foods_database_name).collection(donated_foods_collection_name);
+        const counts = await donated_foods.estimatedDocumentCount();
+        const available_foods = await donated_foods.find().sort({ food_quantity: -1 }).skip(page * limit).limit(limit).toArray();
+        const data = { available_foods, counts };
+        console.log(data);
+        response.send(data);
     } catch (error) {
         console.log(error);
     } finally {
