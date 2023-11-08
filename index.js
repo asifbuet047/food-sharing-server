@@ -99,9 +99,9 @@ clientRequestHandler.get('/availablefoods', async (request, response) => {
         const page = parseInt(request.query.page);
         const limit = parseInt(request.query.limit);
         const donated_foods = mongoClient.db(community_foods_database_name).collection(donated_foods_collection_name);
-        const counts = await donated_foods.estimatedDocumentCount();
-        const available_foods = await donated_foods.find().sort({ food_quantity: -1 }).skip(page * limit).limit(limit).toArray();
-        const data = { available_foods, counts };
+        const totalCount = await donated_foods.estimatedDocumentCount();
+        const available_foods = await donated_foods.find().sort({ food_quantity: -1 }).skip((page - 1) * limit).limit(limit).toArray();
+        const data = { available_foods, currentCount: available_foods.length, totalCount: totalCount };
         console.log(data);
         response.send(data);
     } catch (error) {
