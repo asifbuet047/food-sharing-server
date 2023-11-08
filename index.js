@@ -164,6 +164,33 @@ clientRequestHandler.get('/food/:id', verifyUser, async (request, response) => {
         mongoClient.close();
     }
 });
+clientRequestHandler.get('/myfoods/:email', verifyUser, async (request, response) => {
+    try {
+        await mongoClient.connect();
+        const donator_email = request.params.email;
+        const query = { donator_email: donator_email };
+        const donated_foods = mongoClient.db(community_foods_database_name).collection(donated_foods_collection_name);
+        const food = await donated_foods.find(query).toArray();
+        response.send(food);
+    } catch (error) {
+        console.log(error);
+    } finally {
+        mongoClient.close();
+    }
+});
+clientRequestHandler.post('/deletefood', verifyUser, async (request, response) => {
+    try {
+        await mongoClient.connect();
+        const query = request.body;
+        const donated_foods = mongoClient.db(community_foods_database_name).collection(donated_foods_collection_name);
+        const note = await donated_foods.deleteOne(query);
+        response.send(note);
+    } catch (error) {
+        console.log(error);
+    } finally {
+        mongoClient.close();
+    }
+});
 
 
 clientRequestHandler.post('/requestfood', verifyUser, async (request, response) => {
