@@ -109,6 +109,18 @@ clientRequestHandler.get('/featuredfoods', async (request, response) => {
         mongoClient.close();
     }
 })
+clientRequestHandler.get('/sortfoods', async (request, response) => {
+    try {
+        await mongoClient.connect();
+        const donated_foods = mongoClient.db(community_foods_database_name).collection(donated_foods_collection_name);
+        const sort_foods = await donated_foods.find().sort({ food_quantity: -1 }).limit(6).toArray();
+        response.send(sort_foods);
+    } catch (error) {
+        console.log(error);
+    } finally {
+        mongoClient.close();
+    }
+})
 clientRequestHandler.get('/availablefoods', async (request, response) => {
     try {
         await mongoClient.connect();
@@ -120,6 +132,22 @@ clientRequestHandler.get('/availablefoods', async (request, response) => {
         const data = { available_foods, currentCount: available_foods.length, totalCount: totalCount };
         console.log(data);
         response.send(data);
+    } catch (error) {
+        console.log(error);
+    } finally {
+        mongoClient.close();
+    }
+})
+clientRequestHandler.get('/food/:id', async (request, response) => {
+    try {
+        await mongoClient.connect();
+        const food_id = request.params.id;
+        const query = { food_id: parseInt(food_id) };
+        console.log(query);
+        const donated_foods = mongoClient.db(community_foods_database_name).collection(donated_foods_collection_name);
+        const food = await donated_foods.findOne(query);
+        console.log(food);
+        response.send(food);
     } catch (error) {
         console.log(error);
     } finally {
