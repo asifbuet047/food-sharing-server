@@ -11,6 +11,7 @@ const JWT_SECRET = process.env.JWT_SECRECT_KEY;
 
 const community_foods_database_name = 'communityfoods';
 const donated_foods_collection_name = 'donated_foods';
+const requested_foods_collection_name = 'requested_foods';
 
 
 //middlewares
@@ -24,7 +25,6 @@ clientRequestHandler.use(express.json());
 //token verification custom middleware
 const verifyUser = (request, response, next) => {
     const token = request.cookies?.ACCESS_TOKEN;
-    console.log(token);
     if (token) {
         jwt.verify(token, JWT_SECRET, {
             algorithms: 'HS512',
@@ -80,7 +80,7 @@ clientRequestHandler.get('/', async (request, response) => {
     } finally {
         mongoClient.close();
     }
-})
+});
 clientRequestHandler.get('/seachfood', async (request, response) => {
     try {
         await mongoClient.connect();
@@ -96,7 +96,7 @@ clientRequestHandler.get('/seachfood', async (request, response) => {
     } finally {
         mongoClient.close();
     }
-})
+});
 clientRequestHandler.get('/featuredfoods', async (request, response) => {
     try {
         await mongoClient.connect();
@@ -108,7 +108,7 @@ clientRequestHandler.get('/featuredfoods', async (request, response) => {
     } finally {
         mongoClient.close();
     }
-})
+});
 clientRequestHandler.get('/sortfoods', async (request, response) => {
     try {
         await mongoClient.connect();
@@ -120,7 +120,7 @@ clientRequestHandler.get('/sortfoods', async (request, response) => {
     } finally {
         mongoClient.close();
     }
-})
+});
 clientRequestHandler.get('/availablefoods', async (request, response) => {
     try {
         await mongoClient.connect();
@@ -130,30 +130,72 @@ clientRequestHandler.get('/availablefoods', async (request, response) => {
         const totalCount = await donated_foods.estimatedDocumentCount();
         const available_foods = await donated_foods.find().sort({ food_quantity: -1 }).skip((page - 1) * limit).limit(limit).toArray();
         const data = { available_foods, currentCount: available_foods.length, totalCount: totalCount };
-        console.log(data);
         response.send(data);
     } catch (error) {
         console.log(error);
     } finally {
         mongoClient.close();
     }
-})
+});
+clientRequestHandler.get('/foodcount', async (request, response) => {
+    try {
+        await mongoClient.connect();
+        const donated_foods = mongoClient.db(community_foods_database_name).collection(donated_foods_collection_name);
+        const totalCount = await donated_foods.estimatedDocumentCount();
+        const data = { totalCount: totalCount };
+        response.send(data);
+    } catch (error) {
+        console.log(error);
+    } finally {
+        mongoClient.close();
+    }
+});
 clientRequestHandler.get('/food/:id', verifyUser, async (request, response) => {
     try {
         await mongoClient.connect();
         const food_id = request.params.id;
         const query = { food_id: parseInt(food_id) };
-        console.log(query);
         const donated_foods = mongoClient.db(community_foods_database_name).collection(donated_foods_collection_name);
         const food = await donated_foods.findOne(query);
-        console.log(food);
         response.send(food);
     } catch (error) {
         console.log(error);
     } finally {
         mongoClient.close();
     }
-})
+});
+
+
+clientRequestHandler.post('/requestfood', verifyUser, async (request, response) => {
+    try {
+        await mongoClient.connect();
+        const requestBody = request.body;
+        console.log(requestBody);
+        const requested_foods = mongoClient.db(community_foods_database_name).collection(requested_foods_collection_name);
+        const requestFood = await requested_foods.insertOne(requestBody);
+        console.log(requestFood);
+        response.send(requestFood);
+    } catch (error) {
+        console.log(error);
+    } finally {
+        mongoClient.close();
+    }
+});
+clientRequestHandler.post('/addfood', verifyUser, async (request, response) => {
+    try {
+        await mongoClient.connect();
+        const requestBody = request.body;
+        console.log(requestBody);
+        const donated_foods = mongoClient.db(community_foods_database_name).collection(donated_foods_collection_name);
+        const add_food = await donated_foods.insertOne(requestBody);
+        console.log(add_food);
+        response.send(add_food);
+    } catch (error) {
+        console.log(error);
+    } finally {
+        mongoClient.close();
+    }
+});
 
 clientRequestHandler.listen(PORT, () => {
     console.log(`Community Food Sharing Platform Server is running at port ${PORT}`);
