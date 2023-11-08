@@ -81,6 +81,22 @@ clientRequestHandler.get('/', async (request, response) => {
         mongoClient.close();
     }
 })
+clientRequestHandler.get('/seachfood', async (request, response) => {
+    try {
+        await mongoClient.connect();
+        const name = request.query.name;
+        const refinedName = name.charAt(0).toUpperCase() + name.slice(1);
+        const query = { food_name: refinedName };
+        console.log(query);
+        const donated_foods = mongoClient.db(community_foods_database_name).collection(donated_foods_collection_name);
+        const searched_foods = await donated_foods.find(query).sort({ food_quantity: -1 }).toArray();
+        response.send(searched_foods);
+    } catch (error) {
+        console.log(error);
+    } finally {
+        mongoClient.close();
+    }
+})
 clientRequestHandler.get('/featuredfoods', async (request, response) => {
     try {
         await mongoClient.connect();
