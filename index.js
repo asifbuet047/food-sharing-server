@@ -15,6 +15,7 @@ const donated_foods_collection_name = 'donated_foods';
 
 //middlewares
 clientRequestHandler.use(cors({
+    origin: ['http://localhost:5173'],
     credentials: true,
 }));
 clientRequestHandler.use(cookieParser());
@@ -59,7 +60,6 @@ clientRequestHandler.post('/api/v1/token', (request, response) => {
         expiresIn: '1d',
     }, (error, token) => {
         if (token) {
-            console.log(token);
             response.cookie('ACCESS_TOKEN', token, { httpOnly: true, secure: true, sameSite: 'none' }).send({ user: 'valid', token });
         } else {
             response.send({ user: 'unauthorized', error: error });
@@ -138,7 +138,7 @@ clientRequestHandler.get('/availablefoods', async (request, response) => {
         mongoClient.close();
     }
 })
-clientRequestHandler.get('/food/:id', async (request, response) => {
+clientRequestHandler.get('/food/:id', verifyUser, async (request, response) => {
     try {
         await mongoClient.connect();
         const food_id = request.params.id;
