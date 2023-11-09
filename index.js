@@ -321,6 +321,37 @@ clientRequestHandler.post('/addfood', verifyUser, async (request, response) => {
         mongoClient.close();
     }
 });
+clientRequestHandler.patch('/updatefood/:id', verifyUser, async (request, response) => {
+    try {
+        await mongoClient.connect();
+        const id = request.params.id;
+        const requestBody = request.body;
+        console.log(requestBody);
+        const query = { _id: new ObjectId(id) };
+        const updates = {
+            $set: {
+                food_name: requestBody.food_name,
+                food_image: requestBody.food_image,
+                donator_name: requestBody.donator_name,
+                donator_image: requestBody.donator_image,
+                donator_email: requestBody.donator_email,
+                food_quantity: requestBody.food_quantity,
+                pickup_location: requestBody.pickup_location,
+                expiry_date: requestBody.expiry_date,
+                food_status: requestBody.food_status
+            }
+        };
+        console.log(query, updates);
+        const updated_food = mongoClient.db(community_foods_database_name).collection(donated_foods_collection_name);
+        const update = await updated_food.updateOne(query, updates);
+        console.log(update);
+        response.send(update);
+    } catch (error) {
+        console.log(error);
+    } finally {
+        mongoClient.close();
+    }
+});
 
 clientRequestHandler.listen(PORT, () => {
     console.log(`Community Food Sharing Platform Server is running at port ${PORT}`);
