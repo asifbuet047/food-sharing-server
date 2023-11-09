@@ -100,8 +100,9 @@ clientRequestHandler.get('/seachfood', async (request, response) => {
 clientRequestHandler.get('/featuredfoods', async (request, response) => {
     try {
         await mongoClient.connect();
+        const query = { food_status: true };
         const donated_foods = mongoClient.db(community_foods_database_name).collection(donated_foods_collection_name);
-        const featured_foods = await donated_foods.find().sort({ food_quantity: -1 }).limit(6).toArray();
+        const featured_foods = await donated_foods.find(query).sort({ food_quantity: -1 }).limit(6).toArray();
         response.send(featured_foods);
     } catch (error) {
         console.log(error);
@@ -124,11 +125,12 @@ clientRequestHandler.get('/sortfoods', async (request, response) => {
 clientRequestHandler.get('/availablefoods', async (request, response) => {
     try {
         await mongoClient.connect();
+        const query = { food_status: true };
         const page = parseInt(request.query.page);
         const limit = parseInt(request.query.limit);
         const donated_foods = mongoClient.db(community_foods_database_name).collection(donated_foods_collection_name);
         const totalCount = await donated_foods.estimatedDocumentCount();
-        const available_foods = await donated_foods.find().sort({ food_quantity: -1 }).skip((page - 1) * limit).limit(limit).toArray();
+        const available_foods = await donated_foods.find(query).sort({ food_quantity: -1 }).skip((page - 1) * limit).limit(limit).toArray();
         const data = { available_foods, currentCount: available_foods.length, totalCount: totalCount };
         response.send(data);
     } catch (error) {
@@ -230,6 +232,21 @@ clientRequestHandler.get('/myfoods/:email', verifyUser, async (request, response
         const donator_email = request.params.email;
         const query = { donator_email: donator_email };
         const donated_foods = mongoClient.db(community_foods_database_name).collection(donated_foods_collection_name);
+        const food = await donated_foods.find(query).sort({ food_quantity: -1 }).toArray();
+        console.log(food);
+        response.send(food);
+    } catch (error) {
+        console.log(error);
+    } finally {
+        mongoClient.close();
+    }
+});
+clientRequestHandler.get('/myfoodrequest', verifyUser, async (request, response) => {
+    try {
+        await mongoClient.connect();
+        const donar_mail = request.query.email;
+        const query = { requested_user_email: donar_mail };
+        const donated_foods = mongoClient.db(community_foods_database_name).collection(requested_foods_collection_name);
         const food = await donated_foods.find(query).toArray();
         console.log(food);
         response.send(food);
@@ -239,12 +256,32 @@ clientRequestHandler.get('/myfoods/:email', verifyUser, async (request, response
         mongoClient.close();
     }
 });
+clientRequestHandler.delete('/deleterequest/:id', verifyUser, async (request, response) => {
+    try {
+        await mongoClient.connect();
+        const id = request.params.id;
+        const query = { _id: new ObjectId(id) };
+        const deleted_request = mongoClient.db(community_foods_database_name).collection(requested_foods_collection_name);
+        const food = await deleted_request.deleteOne(query);
+        console.log(food);
+        response.send(food);
+    } catch (error) {
+        console.log(error);
+    } finally {
+        mongoClient.close();
+    }
+});
+
+
 clientRequestHandler.post('/deletefood', verifyUser, async (request, response) => {
     try {
         await mongoClient.connect();
-        const query = request.body;
-        const donated_foods = mongoClient.db(community_foods_database_name).collection(donated_foods_collection_name);
-        const note = await donated_foods.deleteOne(query);
+        const id = request.body;
+        const query = { _id: new ObjectId(id.food_id) };
+        console.log(query);
+        const deleted_food = mongoClient.db(community_foods_database_name).collection(donated_foods_collection_name);
+        const note = await deleted_food.deleteOne(query);
+        console.log(note);
         response.send(note);
     } catch (error) {
         console.log(error);
