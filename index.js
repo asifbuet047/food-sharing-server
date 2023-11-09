@@ -154,9 +154,69 @@ clientRequestHandler.get('/food/:id', verifyUser, async (request, response) => {
     try {
         await mongoClient.connect();
         const food_id = request.params.id;
-        const query = { food_id: parseInt(food_id) };
+        const query = { _id: new ObjectId(food_id) };
         const donated_foods = mongoClient.db(community_foods_database_name).collection(donated_foods_collection_name);
         const food = await donated_foods.findOne(query);
+        response.send(food);
+    } catch (error) {
+        console.log(error);
+    } finally {
+        mongoClient.close();
+    }
+});
+clientRequestHandler.post('/foodStatusUpdate/:id', verifyUser, async (request, response) => {
+    try {
+        await mongoClient.connect();
+        const food_id = request.params.id;
+        const updateField = request.body;
+        const query = { _id: new ObjectId(food_id) };
+        let update;
+        if (updateField.food_status === 'true') {
+            update = {
+                $set: {
+                    food_status: true
+                }
+            };
+        } else {
+            update = {
+                $set: {
+                    food_status: false
+                }
+            };
+        }
+        const status_dpdated = mongoClient.db(community_foods_database_name).collection(donated_foods_collection_name);
+        const food = await status_dpdated.updateOne(query, update);
+        console.log(food);
+        response.send(food);
+    } catch (error) {
+        console.log(error);
+    } finally {
+        mongoClient.close();
+    }
+});
+clientRequestHandler.get('/manage/:id', verifyUser, async (request, response) => {
+    try {
+        await mongoClient.connect();
+        const foodId = request.params.id;
+        const query = { food_id: foodId };
+        const manage_foods = mongoClient.db(community_foods_database_name).collection(requested_foods_collection_name);
+        const food = await manage_foods.find(query).toArray();
+        response.send(food);
+    } catch (error) {
+        console.log(error);
+    } finally {
+        mongoClient.close();
+    }
+});
+clientRequestHandler.get('/requestedfood', verifyUser, async (request, response) => {
+    try {
+        await mongoClient.connect();
+        const requested_user_email = request.query.mail;
+        const query = { requested_user_email };
+        console.log(query);
+        const requested_foods = mongoClient.db(community_foods_database_name).collection(requested_foods_collection_name);
+        const food = await requested_foods.find(query).toArray();
+        console.log(food);
         response.send(food);
     } catch (error) {
         console.log(error);
@@ -171,6 +231,7 @@ clientRequestHandler.get('/myfoods/:email', verifyUser, async (request, response
         const query = { donator_email: donator_email };
         const donated_foods = mongoClient.db(community_foods_database_name).collection(donated_foods_collection_name);
         const food = await donated_foods.find(query).toArray();
+        console.log(food);
         response.send(food);
     } catch (error) {
         console.log(error);
