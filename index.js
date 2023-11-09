@@ -16,7 +16,7 @@ const requested_foods_collection_name = 'requested_foods';
 
 //middlewares
 clientRequestHandler.use(cors({
-    origin: ['http://localhost:5173'],
+    origin: ['http://localhost:5173', 'https://assignment-11-community-foods.web.app/'],
     credentials: true,
 }));
 clientRequestHandler.use(cookieParser());
